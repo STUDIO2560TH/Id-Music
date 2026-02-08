@@ -31,8 +31,11 @@ jobs:
         run: |
           git config --global user.name "GitHub Action"
           git config --global user.email "action@github.com"
-          git add Ids
-          git commit -m "chore: added new audio IDs and shared with collaborator" || exit 0
+          
+          # 'git add .' will stage the ID file update AND the file deletions
+          git add . 
+          
+          git commit -m "chore: upload audio and cleanup sounds folder" || exit 0
           git push
     
       - name: Run Upload and Share
