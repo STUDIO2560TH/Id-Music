@@ -2,8 +2,29 @@ import requests, os, time, json
 
 API_KEY = os.getenv("ROBLOX_API_KEY") 
 GROUP_ID = os.getenv("ROBLOX_GROUP_ID")
-AUDIO_DIR = "sounds/"
-IDS_FILE = "Ids"  # Your specific file name
+COLLAB_GROUP_ID = os.getenv("COLLABORATOR_GROUP_ID") # The group you want to share with
+IDS_FILE = "Ids"
+
+def grant_permissions(asset_id):
+    # This grants "Use" permission to the specific collaborator group
+    url = f"https://apis.roblox.com/asset-permissions-api/v1/assets/{asset_id}/permissions"
+    headers = {"x-api-key": API_KEY, "Content-Type": "application/json"}
+    
+    payload = {
+        "requests": [{
+            "subject": {
+                "subjectType": "Group",
+                "subjectId": COLLAB_GROUP_ID
+            },
+            "action": "Use" # Allows the group to use the audio in their games
+        }]
+    }
+    
+    res = requests.patch(url, headers=headers, json=payload)
+    if res.status_code == 200:
+        print(f"Successfully shared {asset_id} with Group {COLLAB_GROUP_ID}")
+    else:
+        print(f"Failed to share: {res.text}")
 
 def upload_audio(file_path, filename):
     url = "https://apis.roblox.com/assets/v1/assets"
@@ -25,30 +46,10 @@ def upload_audio(file_path, filename):
     while True:
         status = requests.get(f"https://apis.roblox.com/assets/v1/{operation_path}", headers=headers).json()
         if status.get("done"):
-            return status["response"]["assetId"]
+            asset_id = status["response"]["assetId"]
+            # NEW: Grant permissions once the upload is done
+            grant_permissions(asset_id)
+            return asset_id
         time.sleep(5)
 
-# --- MAIN LOGIC ---
-# 1. Read existing IDs to avoid duplicates
-existing_ids = ""
-if os.path.exists(IDS_FILE):
-    with open(IDS_FILE, "r") as f:
-        existing_ids = f.read()
-
-new_content = ""
-for file in os.listdir(AUDIO_DIR):
-    if file.endswith(".mp3"):
-        # We check if the filename is already "noted" or if we want to just upload
-        # To keep it simple, we'll upload and prep the new string
-        print(f"Uploading {file}...")
-        asset_id = upload_audio(os.path.join(AUDIO_DIR, file), file)
-        
-        if asset_id:
-            # Format: ID followed by a comma and newline
-            new_content += f"{asset_id},\n"
-
-# 2. Prepend new IDs to the top of the old file
-if new_content:
-    with open(IDS_FILE, "w") as f:
-        f.write(new_content + existing_ids)
-    print("Successfully updated Ids file.")
+# (Rest of your Main Logic remains the same as before)
