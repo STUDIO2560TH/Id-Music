@@ -9,41 +9,68 @@ AUDIO_DIR = "sounds/"
 IDS_FILE = "Ids"
 
 def grant_permissions(asset_id):
+    """Grants 'Use' permission ONLY to the collaborator group."""
     url = f"https://apis.roblox.com/asset-permissions-api/v1/assets/{asset_id}/permissions"
-    
-    # Adding a User-Agent can sometimes bypass 'Cookie' requirement errors
     headers = {
         "x-api-key": API_KEY,
-        "Content-Type": "application/json",
-        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)" 
+        "Content-Type": "application/json"
     }
     
+    # Focusing ONLY on Group permission to bypass Universe-related cookie errors
     payload = {
-        "requests": [
-            {
-                "subject": { "subjectType": "Group", "subjectId": str(COLLAB_GROUP_ID) },
-                "action": "Use"
-            },
-            {
-                "subject": { "subjectType": "Universe", "subjectId": str(TARGET_UNIVERSE_ID) },
-                "action": "Use"
-            }
-        ]
+        "requests": [{
+            "subject": { "subjectType": "Group", "subjectId": str(COLLAB_GROUP_ID) },
+            "action": "Use"
+        }]
     }
     
-    # Step 1: Get the XSRF Token
-    first_res = requests.patch(url, headers=headers, json=payload)
+    # Step 1: Request XSRF Token
+    res = requests.patch(url, headers=headers, json=payload)
     
-    if first_res.status_code == 403 and "X-CSRF-TOKEN" in first_res.headers:
-        headers["X-CSRF-TOKEN"] = first_res.headers["X-CSRF-TOKEN"]
-        # Step 2: Retry with the token
-        final_res = requests.post(url, headers=headers, json=payload) # Try POST if PATCH fails
-        if final_res.status_code == 200:
-            print(f"✅ Permissions granted for {asset_id}")
-            return
-            
-    print(f"⚠️ Permission sync skipped (Roblox API limitation). You may need to manually allow this ID in your other game's settings.")
+    if res.status_code == 403 and "X-CSRF-TOKEN" in res.headers:
+        headers["X-CSRF-TOKEN"] = res.headers["X-CSRF-TOKEN"]
+        # Step 2: Retry with Token
+        res = requests.patch(url, headers=headers, json=payload)
+    
+    if res.status_code == 200:
+        print(f"✅ Group {COLLAB_GROUP_ID} granted access to {asset_id}")
+    else:
+        print(f"⚠️ Group sharing skipped: {res.text}")
 
+# --- Main Execution ---
+if __name__ == "__main__":
+    if not os.path.exists(AUDIO_DIR):
+        os.makedirs(AUDIO_DIR)
+
+    existing_ids = ""
+    if os.path.exists(IDS_FILE):
+        with open(IDS_FILE, "r") as f:
+            existing_ids = f.read()
+
+    new_ids_text = ""
+    files = [f for f in os.listdir(AUDIO_DIR) if f.endswith(".mp3")]
+
+    if not files:
+        print("No new songs found in sounds/ folder.")
+    else:
+        for file in files:
+            file_path = os.path.join(AUDIO_DIR, file)
+            print(f"Processing: {file}")
+            
+            asset_id = upload_audio(file_path, file)
+            
+            if asset_id:
+                new_ids_text += f"{asset_id},\n"
+                # DELETE FILE after successful upload
+                os.remove(file_path)
+                print(f"🗑️ Deleted {file} from sounds/ folder.")
+
+        if new_ids_text:
+            # Update the Ids file with new IDs at the top
+            with open(IDS_FILE, "w") as f:
+                f.write(new_ids_text + existing_ids)
+            print("✅ All new IDs saved to Ids file.")
+            
 def upload_audio(file_path, filename):
     url = "https://apis.roblox.com/assets/v1/assets"
     headers = {"x-api-key": API_KEY}
