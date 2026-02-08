@@ -9,13 +9,18 @@ AUDIO_DIR = "sounds/"
 IDS_FILE = "Ids"
 
 def clean_file_name(filename):
-    """Ensures the filename is valid for Roblox (3-50 chars, ASCII only)."""
-    # Everything inside here MUST be indented by 4 spaces
+    """Try to keep the original name, but cut it if it's over 50 chars."""
     name = filename.rsplit('.', 1)[0]
-    if name.isascii() and 3 <= len(name) <= 50:
-        return name
-    else:
-        return "Audio_" + str(int(time.time()))
+    
+    # Roblox strictly forbids names longer than 50 characters
+    if len(name) > 50:
+        name = name[:50]
+        
+    # Roblox requires at least 3 characters
+    if len(name) < 3:
+        name = name + "_Audio"
+        
+    return name
 
 def grant_permissions(asset_id):
     """Grants 'Use' permission to the collaborator group and universe."""
