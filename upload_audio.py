@@ -9,9 +9,11 @@ AUDIO_DIR = "sounds/"
 IDS_FILE = "Ids"
 
 def grant_permissions(asset_id):
-    """Grants 'Use' permission to a group AND a specific Experience."""
     url = f"https://apis.roblox.com/asset-permissions-api/v1/assets/{asset_id}/permissions"
-    headers = {"x-api-key": API_KEY, "Content-Type": "application/json"}
+    headers = {
+        "x-api-key": API_KEY, 
+        "Content-Type": "application/json"
+    }
     
     payload = {
         "requests": [
@@ -26,11 +28,18 @@ def grant_permissions(asset_id):
         ]
     }
     
+    # 1. First attempt to get the XSRF Token
     res = requests.patch(url, headers=headers, json=payload)
+    
+    # 2. If it fails with XSRF error, grab the token and try again
+    if res.status_code == 403 and "X-CSRF-TOKEN" in res.headers:
+        headers["X-CSRF-TOKEN"] = res.headers["X-CSRF-TOKEN"]
+        res = requests.patch(url, headers=headers, json=payload)
+    
     if res.status_code == 200:
-        print(f"✅ Permissions granted for Asset {asset_id}")
+        print(f"✅ Permissions successfully granted for {asset_id}")
     else:
-        print(f"❌ Permission update failed: {res.text}")
+        print(f"❌ Permission update failed again: {res.text}")
 
 def upload_audio(file_path, filename):
     url = "https://apis.roblox.com/assets/v1/assets"
