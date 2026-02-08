@@ -1,27 +1,36 @@
 import requests, os, time, json
 
-# Configuration from GitHub Secrets
+# Configuration
 API_KEY = os.getenv("ROBLOX_API_KEY") 
 GROUP_ID = os.getenv("ROBLOX_GROUP_ID")
 COLLAB_GROUP_ID = os.getenv("COLLABORATOR_GROUP_ID")
+TARGET_UNIVERSE_ID = os.getenv("TARGET_UNIVERSE_ID") # New Secret
 AUDIO_DIR = "sounds/"
 IDS_FILE = "Ids"
 
 def grant_permissions(asset_id):
-    """Grants 'Use' permission to the collaborator group."""
+    """Grants 'Use' permission to a group AND a specific Experience."""
     url = f"https://apis.roblox.com/asset-permissions-api/v1/assets/{asset_id}/permissions"
     headers = {"x-api-key": API_KEY, "Content-Type": "application/json"}
+    
     payload = {
-        "requests": [{
-            "subject": { "subjectType": "Group", "subjectId": COLLAB_GROUP_ID },
-            "action": "Use"
-        }]
+        "requests": [
+            {
+                "subject": { "subjectType": "Group", "subjectId": COLLAB_GROUP_ID },
+                "action": "Use"
+            },
+            {
+                "subject": { "subjectType": "Universe", "subjectId": TARGET_UNIVERSE_ID },
+                "action": "Use"
+            }
+        ]
     }
+    
     res = requests.patch(url, headers=headers, json=payload)
     if res.status_code == 200:
-        print(f"✅ Shared {asset_id} with Group {COLLAB_GROUP_ID}")
+        print(f"✅ Permissions granted for Asset {asset_id}")
     else:
-        print(f"❌ Failed to share: {res.text}")
+        print(f"❌ Permission update failed: {res.text}")
 
 def upload_audio(file_path, filename):
     """Uploads audio to Roblox and returns the Asset ID."""
