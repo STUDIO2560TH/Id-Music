@@ -34,3 +34,11 @@ jobs:
           git add Ids
           git commit -m "chore: added new audio IDs and shared with collaborator" || exit 0
           git push
+    
+      - name: Run Upload and Share
+        env:
+          ROBLOX_API_KEY: ${{ secrets.ROBLOX_API_KEY }}
+          ROBLOX_GROUP_ID: ${{ secrets.ROBLOX_GROUP_ID }}
+          COLLABORATOR_GROUP_ID: ${{ secrets.COLLABORATOR_GROUP_ID }}
+          TARGET_UNIVERSE_ID: ${{ secrets.TARGET_UNIVERSE_ID }}
+        run: python upload_audio.py
