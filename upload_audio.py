@@ -9,16 +9,15 @@ AUDIO_DIR = "sounds/"
 IDS_FILE = "Ids"
 
 def clean_file_name(filename):
-    """Try to keep the original name, but cut it if it's over 50 chars."""
+    """Allows Thai characters but ensures length is correct."""
     name = filename.rsplit('.', 1)[0]
     
-    # Roblox strictly forbids names longer than 50 characters
+    # Roblox still requires names to be between 3 and 50 characters
+    # Note: Thai characters sometimes count as more than 1 'byte'
     if len(name) > 50:
         name = name[:50]
-        
-    # Roblox requires at least 3 characters
     if len(name) < 3:
-        name = name + "_Audio"
+        name = name + "_Aud"
         
     return name
 
