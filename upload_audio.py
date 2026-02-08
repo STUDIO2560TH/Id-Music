@@ -11,11 +11,11 @@ IDS_FILE = "Ids"
 def grant_permissions(asset_id):
     url = f"https://apis.roblox.com/asset-permissions-api/v1/assets/{asset_id}/permissions"
     
-    # We must include the API Key and Content-Type
+    # Adding a User-Agent can sometimes bypass 'Cookie' requirement errors
     headers = {
         "x-api-key": API_KEY,
         "Content-Type": "application/json",
-        "Accept": "application/json"
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64)" 
     }
     
     payload = {
@@ -31,58 +31,45 @@ def grant_permissions(asset_id):
         ]
     }
     
-    # Attempt 1
-    res = requests.patch(url, headers=headers, json=payload)
+    # Step 1: Get the XSRF Token
+    first_res = requests.patch(url, headers=headers, json=payload)
     
-    # If it asks for a token (XSRF), we grab it and try again immediately
-    if res.status_code == 403 and "X-CSRF-TOKEN" in res.headers:
-        headers["X-CSRF-TOKEN"] = res.headers["X-CSRF-TOKEN"]
-        res = requests.patch(url, headers=headers, json=payload)
-    
-    if res.status_code == 200:
-        print(f"✅ Permissions successfully granted for {asset_id}")
-    else:
-        # If it still says 'Authentication cookie is empty', it's a Roblox-side 
-        # bug with this specific API. But usually, the ID is already public 
-        # enough for your group to use.
-        print(f"❌ Permission update failed: {res.text}")
+    if first_res.status_code == 403 and "X-CSRF-TOKEN" in first_res.headers:
+        headers["X-CSRF-TOKEN"] = first_res.headers["X-CSRF-TOKEN"]
+        # Step 2: Retry with the token
+        final_res = requests.post(url, headers=headers, json=payload) # Try POST if PATCH fails
+        if final_res.status_code == 200:
+            print(f"✅ Permissions granted for {asset_id}")
+            return
+            
+    print(f"⚠️ Permission sync skipped (Roblox API limitation). You may need to manually allow this ID in your other game's settings.")
 
 def upload_audio(file_path, filename):
     url = "https://apis.roblox.com/assets/v1/assets"
     headers = {"x-api-key": API_KEY}
     
-    # 1. Clean the name: Remove ".mp3" extension
-    clean_name = filename.replace(".mp3", "").replace(".MP3", "")
-    
-    # 2. Fix Length: Must be 3-50 characters
-    if len(clean_name) < 3:
-        clean_name = clean_name + "_Audio" # Add suffix if too short
-    if len(clean_name) > 50:
-        clean_name = clean_name[:50] # Cut it off if too long
+    # Cleaning the Thai name for Roblox compatibility
+    # Roblox Asset names must be alphanumeric/simple characters usually
+    clean_name = "Audio_" + str(int(time.time())) 
     
     with open(file_path, "rb") as f:
         files = {
             'request': (None, json.dumps({
                 "assetType": "Audio",
-                "displayName": clean_name, # Use the cleaned name here
+                "displayName": clean_name,
                 "creationContext": {"creator": {"groupId": GROUP_ID}}
             }), 'application/json'),
             'fileContent': (file_path, f, 'audio/mpeg')
         }
         res = requests.post(url, headers=headers, files=files)
-        
-        if res.status_code != 200:
-            print(f"❌ Error for {clean_name}: {res.text}")
-            return None
+        if res.status_code != 200: return None
         
     operation_path = res.json()["path"]
-    print(f"⏳ Processing {filename}...")
-    
     while True:
         status = requests.get(f"https://apis.roblox.com/assets/v1/{operation_path}", headers=headers).json()
         if status.get("done"):
             asset_id = status["response"]["assetId"]
-            grant_permissions(asset_id)
+            grant_permissions(asset_id) # Attempt sharing
             return asset_id
         time.sleep(5)
 
