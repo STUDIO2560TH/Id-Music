@@ -33,22 +33,31 @@ def grant_permissions(asset_id):
         print(f"❌ Permission update failed: {res.text}")
 
 def upload_audio(file_path, filename):
-    """Uploads audio to Roblox and returns the Asset ID."""
     url = "https://apis.roblox.com/assets/v1/assets"
     headers = {"x-api-key": API_KEY}
+    
+    # 1. Clean the name: Remove ".mp3" extension
+    clean_name = filename.replace(".mp3", "").replace(".MP3", "")
+    
+    # 2. Fix Length: Must be 3-50 characters
+    if len(clean_name) < 3:
+        clean_name = clean_name + "_Audio" # Add suffix if too short
+    if len(clean_name) > 50:
+        clean_name = clean_name[:50] # Cut it off if too long
     
     with open(file_path, "rb") as f:
         files = {
             'request': (None, json.dumps({
                 "assetType": "Audio",
-                "displayName": filename,
+                "displayName": clean_name, # Use the cleaned name here
                 "creationContext": {"creator": {"groupId": GROUP_ID}}
             }), 'application/json'),
             'fileContent': (file_path, f, 'audio/mpeg')
         }
         res = requests.post(url, headers=headers, files=files)
+        
         if res.status_code != 200:
-            print(f"❌ Upload failed for {filename}: {res.text}")
+            print(f"❌ Error for {clean_name}: {res.text}")
             return None
         
     operation_path = res.json()["path"]
