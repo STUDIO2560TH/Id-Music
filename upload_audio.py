@@ -50,7 +50,19 @@ def upload_audio(file_path, filename):
     
     # Cleaning the Thai name for Roblox compatibility
     # Roblox Asset names must be alphanumeric/simple characters usually
-    clean_name = "Audio_" + str(int(time.time())) 
+    def clean_file_name(filename):
+    # Remove extension
+    name = filename.rsplit('.', 1)[0]
+    
+    # Check if name is purely English/Numbers and correct length
+    # If it has Thai characters or is too short/long, use the Timestamp
+    if name.isascii() and 3 <= len(name) <= 50:
+        return name
+    else:
+        return "Audio_" + str(int(time.time()))
+
+# Then inside upload_audio use:
+clean_name = clean_file_name(filename)
     
     with open(file_path, "rb") as f:
         files = {
