@@ -1,33 +1,23 @@
-name: Roblox Group Audio Sync
-on:
-  push:
-    paths:
-      - '**.mp3'  # Triggers when any mp3 is added anywhere in the repo
-
 jobs:
   sync:
     runs-on: ubuntu-latest
+    permissions:
+      contents: write  # This fixes the 'Permission denied' error
     steps:
       - uses: actions/checkout@v4
-      
       - name: Set up Python
         uses: actions/setup-python@v4
-        with:
-          python-version: '3.9'
-
       - name: Install Requests
         run: pip install requests
-
-      - name: Run Upload Script
+      - name: Run Upload
         env:
           ROBLOX_API_KEY: ${{ secrets.ROBLOX_API_KEY }}
           ROBLOX_GROUP_ID: ${{ secrets.ROBLOX_GROUP_ID }}
         run: python upload_audio.py
-
-      - name: Commit and Push IDs
+      - name: Commit Changes
         run: |
           git config --global user.name "GitHub Action"
           git config --global user.email "action@github.com"
-          git add .
-          git commit -m "chore: update roblox asset ids" || exit 0
+          git add Ids
+          git commit -m "Added new music IDs" || exit 0
           git push
