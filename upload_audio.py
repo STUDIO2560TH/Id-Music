@@ -22,35 +22,36 @@ def clean_file_name(filename):
     return name
 
 def grant_permissions(asset_id):
-    """Grants 'Use' permission to the collaborator group and universe."""
+    """Grants 'Use' permission to a specific external Experience."""
     url = f"https://apis.roblox.com/asset-permissions-api/v1/assets/{asset_id}/permissions"
-    headers = {"x-api-key": API_KEY, "Content-Type": "application/json"}
     
-    payload = {
-        "requests": [
-            {
-                "subject": { "subjectType": "Group", "subjectId": str(COLLAB_GROUP_ID) },
-                "action": "Use"
-            },
-            {
-                "subject": { "subjectType": "Universe", "subjectId": str(TARGET_UNIVERSE_ID) },
-                "action": "Use"
-            }
-        ]
+    # We use the Universe ID you provided
+    target_universe = "3125850465" 
+    
+    headers = {
+        "x-api-key": API_KEY,
+        "Content-Type": "application/json"
     }
     
-    # Attempt 1
+    payload = {
+        "requests": [{
+            "subject": { "subjectType": "Universe", "subjectId": target_universe },
+            "action": "Use"
+        }]
+    }
+    
+    # Step 1: Get the XSRF Token (Handshake)
     res = requests.patch(url, headers=headers, json=payload)
     
-    # Retry with XSRF token if needed
     if res.status_code == 403 and "X-CSRF-TOKEN" in res.headers:
         headers["X-CSRF-TOKEN"] = res.headers["X-CSRF-TOKEN"]
+        # Step 2: Second attempt with Token
         res = requests.patch(url, headers=headers, json=payload)
     
     if res.status_code == 200:
-        print(f"✅ Permissions granted for {asset_id}")
+        print(f"✅ Successfully granted permission to Experience: {target_universe}")
     else:
-        print(f"⚠️ Permission sync skipped: {res.text}")
+        print(f"❌ Permission Error: {res.status_code} - {res.text}")
 
 def upload_audio(file_path, filename):
     """Handles the actual upload and polling for the ID."""
