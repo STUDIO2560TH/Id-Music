@@ -96,3 +96,33 @@ if new_ids_text:
     with open(IDS_FILE, "w") as f:
         f.write(new_ids_text + existing_ids)
     print("✅ Ids file updated.")
+
+# --- Main Execution ---
+if not os.path.exists(AUDIO_DIR):
+    os.makedirs(AUDIO_DIR)
+
+existing_ids = ""
+if os.path.exists(IDS_FILE):
+    with open(IDS_FILE, "r") as f:
+        existing_ids = f.read()
+
+new_ids_text = ""
+files_to_upload = [f for f in os.listdir(AUDIO_DIR) if f.endswith(".mp3")]
+
+for file in files_to_upload:
+    file_path = os.path.join(AUDIO_DIR, file)
+    asset_id = upload_audio(file_path, file)
+    
+    if asset_id:
+        print(f"✅ Captured ID: {asset_id}")
+        new_ids_text += f"{asset_id},\n"
+        
+        # REMOVE THE FILE LOCALLY AFTER SUCCESSFUL UPLOAD
+        os.remove(file_path)
+        print(f"🗑️ Removed {file} from sounds folder.")
+
+if new_ids_text:
+    # Prepend new IDs to the top of the file
+    with open(IDS_FILE, "w") as f:
+        f.write(new_ids_text + existing_ids)
+    print("✅ Ids file updated in workspace.")
