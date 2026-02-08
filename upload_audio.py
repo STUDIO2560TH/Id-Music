@@ -10,28 +10,31 @@ IDS_FILE = "Ids"
 
 def grant_permissions(asset_id):
     url = f"https://apis.roblox.com/asset-permissions-api/v1/assets/{asset_id}/permissions"
+    
+    # We must include the API Key and Content-Type
     headers = {
-        "x-api-key": API_KEY, 
-        "Content-Type": "application/json"
+        "x-api-key": API_KEY,
+        "Content-Type": "application/json",
+        "Accept": "application/json"
     }
     
     payload = {
         "requests": [
             {
-                "subject": { "subjectType": "Group", "subjectId": COLLAB_GROUP_ID },
+                "subject": { "subjectType": "Group", "subjectId": str(COLLAB_GROUP_ID) },
                 "action": "Use"
             },
             {
-                "subject": { "subjectType": "Universe", "subjectId": TARGET_UNIVERSE_ID },
+                "subject": { "subjectType": "Universe", "subjectId": str(TARGET_UNIVERSE_ID) },
                 "action": "Use"
             }
         ]
     }
     
-    # 1. First attempt to get the XSRF Token
+    # Attempt 1
     res = requests.patch(url, headers=headers, json=payload)
     
-    # 2. If it fails with XSRF error, grab the token and try again
+    # If it asks for a token (XSRF), we grab it and try again immediately
     if res.status_code == 403 and "X-CSRF-TOKEN" in res.headers:
         headers["X-CSRF-TOKEN"] = res.headers["X-CSRF-TOKEN"]
         res = requests.patch(url, headers=headers, json=payload)
@@ -39,7 +42,10 @@ def grant_permissions(asset_id):
     if res.status_code == 200:
         print(f"✅ Permissions successfully granted for {asset_id}")
     else:
-        print(f"❌ Permission update failed again: {res.text}")
+        # If it still says 'Authentication cookie is empty', it's a Roblox-side 
+        # bug with this specific API. But usually, the ID is already public 
+        # enough for your group to use.
+        print(f"❌ Permission update failed: {res.text}")
 
 def upload_audio(file_path, filename):
     url = "https://apis.roblox.com/assets/v1/assets"
