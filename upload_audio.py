@@ -79,6 +79,12 @@ for file in os.listdir(AUDIO_DIR):
             uploaded_main[file] = asset_id
             recent_uploads_main[file] = asset_id
             new_uploads_main = True
+            # Delete file after successful upload
+            try:
+                os.remove(os.path.join(AUDIO_DIR, file))
+                print(f"Deleted {file} from {AUDIO_DIR}")
+            except OSError as e:
+                print(f"Error deleting {file}: {e}")
 
 if new_uploads_main:
     with open(LOG_FILE, "w") as f:
@@ -110,6 +116,12 @@ for file in os.listdir(IGNORED_AUDIO_DIR):
             uploaded_ignored[file] = asset_id
             recent_uploads_ignored[file] = asset_id
             new_uploads_ignored = True
+            # Delete file after successful upload
+            try:
+                os.remove(os.path.join(IGNORED_AUDIO_DIR, file))
+                print(f"Deleted {file} from {IGNORED_AUDIO_DIR}")
+            except OSError as e:
+                print(f"Error deleting {file}: {e}")
 
 if new_uploads_ignored:
     with open(IGNORED_LOG_FILE, "w") as f:
