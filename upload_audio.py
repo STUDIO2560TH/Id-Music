@@ -65,6 +65,8 @@ uploaded_ignored = get_already_uploaded(IGNORED_LOG_FILE)
 
 # Process main sounds folder (added to music list)
 new_uploads_main = False
+recent_uploads_main = {}
+
 if not os.path.exists(AUDIO_DIR):
     os.makedirs(AUDIO_DIR)
 
@@ -75,17 +77,27 @@ for file in os.listdir(AUDIO_DIR):
         asset_id = upload_audio(os.path.join(AUDIO_DIR, file), file)
         if asset_id:
             uploaded_main[file] = asset_id
+            recent_uploads_main[file] = asset_id
             new_uploads_main = True
 
 if new_uploads_main:
     with open(LOG_FILE, "w") as f:
         json.dump(uploaded_main, f, indent=4)
     print(f"Updated {LOG_FILE} successfully.")
+    
+    # Write to keep file
+    with open(os.path.join(AUDIO_DIR, "keep"), "w") as f:
+        f.write("Recently Uploaded:\n")
+        for filename, asset_id in recent_uploads_main.items():
+            f.write(f"{asset_id}\n")
+    print(f"Updated {AUDIO_DIR}keep with recent uploads.")
 else:
     print(f"No new audio files in {AUDIO_DIR}.")
 
 # Process ignored sounds folder (NOT added to music list)
 new_uploads_ignored = False
+recent_uploads_ignored = {}
+
 if not os.path.exists(IGNORED_AUDIO_DIR):
     os.makedirs(IGNORED_AUDIO_DIR)
 
@@ -96,11 +108,19 @@ for file in os.listdir(IGNORED_AUDIO_DIR):
         asset_id = upload_audio(os.path.join(IGNORED_AUDIO_DIR, file), file)
         if asset_id:
             uploaded_ignored[file] = asset_id
+            recent_uploads_ignored[file] = asset_id
             new_uploads_ignored = True
 
 if new_uploads_ignored:
     with open(IGNORED_LOG_FILE, "w") as f:
         json.dump(uploaded_ignored, f, indent=4)
     print(f"Updated {IGNORED_LOG_FILE} successfully.")
+
+    # Write to keep file
+    with open(os.path.join(IGNORED_AUDIO_DIR, "keep"), "w") as f:
+        f.write("Recently Uploaded:\n")
+        for filename, asset_id in recent_uploads_ignored.items():
+            f.write(f"{asset_id}\n")
+    print(f"Updated {IGNORED_AUDIO_DIR}keep with recent uploads.")
 else:
     print(f"No new audio files in {IGNORED_AUDIO_DIR}.")
