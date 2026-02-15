@@ -28,11 +28,14 @@ def upload_audio(file_path, filename):
     url = "https://apis.roblox.com/assets/v1/assets"
     headers = {"x-api-key": API_KEY}
     
+    # Remove extension from filename for the display name
+    display_name = os.path.splitext(filename)[0]
+    
     with open(file_path, "rb") as f:
         files = {
             'request': (None, json.dumps({
                 "assetType": "Audio",
-                "displayName": filename,
+                "displayName": display_name,
                 "creationContext": {"creator": {"groupId": GROUP_ID}}
             }), 'application/json'),
             'fileContent': (file_path, f, 'audio/mpeg')
