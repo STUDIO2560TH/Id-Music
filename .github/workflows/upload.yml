@@ -1,14 +1,12 @@
-name: Roblox Audio Sync
+name: Roblox Group Audio Sync
 on:
   push:
     paths:
-      - 'sounds/**'
+      - '**.mp3'  # Triggers when any mp3 is added anywhere in the repo
 
 jobs:
   sync:
     runs-on: ubuntu-latest
-    permissions:
-      contents: write  # Allows the bot to update your 'Ids' file
     steps:
       - uses: actions/checkout@v4
       
@@ -20,28 +18,27 @@ jobs:
       - name: Install Requests
         run: pip install requests
 
-      - name: Run Upload and Share
+      - name: Run Upload Script
         env:
           ROBLOX_API_KEY: ${{ secrets.ROBLOX_API_KEY }}
           ROBLOX_GROUP_ID: ${{ secrets.ROBLOX_GROUP_ID }}
-          COLLABORATOR_GROUP_ID: ${{ secrets.COLLABORATOR_GROUP_ID }}
         run: python upload_audio.py
 
-      - name: Commit and Push Changes
+      - name: Show Recent Uploads
+        run: |
+          if [ -f sounds/keep ]; then
+            echo "--- Sounds Keep File ---"
+            cat sounds/keep
+          fi
+          if [ -f sounds_ignored/keep ]; then
+            echo "--- Ignored Sounds Keep File ---"
+            cat sounds_ignored/keep
+          fi
+
+      - name: Commit and Push IDs
         run: |
           git config --global user.name "GitHub Action"
           git config --global user.email "action@github.com"
-          
-          # 'git add .' will stage the ID file update AND the file deletions
-          git add . 
-          
-          git commit -m "chore: upload audio and cleanup sounds folder" || exit 0
+          git add .
+          git commit -m "chore: update roblox asset ids" || exit 0
           git push
-    
-      - name: Run Upload and Share
-        env:
-          ROBLOX_API_KEY: ${{ secrets.ROBLOX_API_KEY }}
-          ROBLOX_GROUP_ID: ${{ secrets.ROBLOX_GROUP_ID }}
-          COLLABORATOR_GROUP_ID: ${{ secrets.COLLABORATOR_GROUP_ID }}
-          TARGET_UNIVERSE_ID: ${{ secrets.TARGET_UNIVERSE_ID }}
-        run: python upload_audio.py
