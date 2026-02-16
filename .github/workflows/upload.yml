@@ -3,6 +3,10 @@ on:
   push:
     paths:
       - '**.mp3'  # Triggers when any mp3 is added anywhere in the repo
+  workflow_dispatch:  # Allows manual runs
+
+permissions:
+  contents: write
 
 jobs:
   sync:
@@ -39,6 +43,6 @@ jobs:
         run: |
           git config --global user.name "GitHub Action"
           git config --global user.email "action@github.com"
-          git add .
+          git add asset_ids.json ignored_asset_ids.json sounds/keep sounds_ignored/keep || true
           git commit -m "chore: update roblox asset ids" || exit 0
           git push
