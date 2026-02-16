@@ -108,7 +108,12 @@ def process_directory(directory, log_file, is_ignored_list=False):
                     print(f"Failed to upload {file}")
                     # Don't exit immediately, try other files, but could flag an error
             else:
-                 print(f"Skipping {file} (already in log).")
+                 print(f"File {file} is already in the log. Cleaning up...")
+                 try:
+                    os.remove(os.path.join(directory, file))
+                    print(f"Deleted {file} from {directory}")
+                 except OSError as e:
+                    print(f"Error deleting {file}: {e}")
         else:
              print(f"Skipping {file} (not an .mp3).")
 
