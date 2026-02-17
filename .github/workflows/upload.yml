@@ -45,4 +45,5 @@ jobs:
           git config --global user.email "action@github.com"
           git add asset_ids.json ignored_asset_ids.json sounds/ sounds_ignored/ Ids || true
           git commit -m "chore: update roblox asset ids" || exit 0
+          git pull --rebase origin main || true
           git push
