@@ -130,14 +130,22 @@ def process_directory(directory, log_file, is_ignored_list=False):
                 f.write(f"{asset_id}\n")
         print(f"Updated {keep_file} with recent uploads.")
         
-        # Append new asset IDs to the Ids file (only for main sounds directory)
+        # Prepend new asset IDs to the top of the Ids file (only for main sounds directory)
         if not is_ignored_list:
             ids_file = "Ids"
             try:
-                with open(ids_file, "a") as f:
+                # Read existing content
+                existing_content = ""
+                if os.path.exists(ids_file):
+                    with open(ids_file, "r") as f:
+                        existing_content = f.read()
+                
+                # Write new IDs at the top, then existing content
+                with open(ids_file, "w") as f:
                     for filename, asset_id in recent_uploads.items():
                         f.write(f"{asset_id},\n")
-                print(f"Appended {len(recent_uploads)} new asset ID(s) to {ids_file}")
+                    f.write(existing_content)
+                print(f"Prepended {len(recent_uploads)} new asset ID(s) to top of {ids_file}")
             except Exception as e:
                 print(f"Error updating {ids_file}: {e}")
     else:
