@@ -153,6 +153,6 @@ def process_directory(directory, log_file, is_ignored_list=False):
 
 # Main Logic
 process_directory(AUDIO_DIR, LOG_FILE)
-process_directory(IGNORED_AUDIO_DIR, IGNORED_LOG_FILE)
+process_directory(IGNORED_AUDIO_DIR, IGNORED_LOG_FILE, is_ignored_list=True)
 
 print("Script finished.")
